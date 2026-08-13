@@ -35,15 +35,6 @@ PIPER_MODEL = os.path.join(BASE_DIR, "models", "piper", "pt_BR-faber-medium.onnx
 PIPER_BIN = shutil.which("piper") or os.path.expanduser("~/.local/bin/piper")
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
 DEFAULT_WEATHER_CITY = "Sao Paulo"
-HELOISA_ANSWER = (
-    "Heloísa é uma moça que estuda na Universidade Presbiteriana Mackenzie, "
-    "trabalha na Rádio Antena 1 e é muito simpática, super gente boa."
-)
-CAIO_ANSWER = (
-    "Caio trabalha atualmente na Rádio Antena 1. É um ótimo chefe, uma pessoa incrível, "
-    "divertida e sempre de bom humor. Além disso, é um super paizão. Vim do futuro para "
-    "te dizer que sua filha, Olivia, te ama muito e tem muito orgulho de você. Tenha um excelente dia!"
-)
 _vosk_model = None
 _whisper_model = None
 _tts_cache = {}
@@ -80,14 +71,6 @@ def has_word(clean: str, word: str) -> bool:
 
 def has_any_word(clean: str, words: list[str]) -> bool:
     return any(has_word(clean, word) for word in words)
-
-
-def mentions_heloisa(clean: str) -> bool:
-    return has_any_word(clean, ["heloisa", "eloisa", "louisa", "heloiza", "eloiza"])
-
-
-def mentions_caio(clean: str) -> bool:
-    return has_word(clean, "caio")
 
 
 def wants_radio_playback(clean: str) -> bool:
@@ -168,25 +151,6 @@ def is_date_question(clean: str) -> bool:
 
 def is_weather_question(clean: str) -> bool:
     return any(word in clean for word in ["graus", "temperatura", "clima", "tempo"])
-
-
-def is_heloisa_question(clean: str) -> bool:
-    if not mentions_heloisa(clean):
-        return False
-    return (
-        has_any_word(clean, ["quem", "sobre", "sabe", "fale", "onde", "trabalha", "estuda", "ai", "ei"])
-        or clean.startswith("o que")
-        or len(clean.split()) <= 3
-    )
-
-
-def is_caio_question(clean: str) -> bool:
-    if not mentions_caio(clean):
-        return False
-    return (
-        has_any_word(clean, ["quem", "sobre", "sabe", "fale", "onde", "trabalha", "chefe", "pai", "paizao", "olivia"])
-        or clean.startswith("o que")
-    )
 
 
 def is_current_fact_question(clean: str) -> bool:
@@ -395,12 +359,7 @@ def direct_answer_from_web(text: str, results: list[dict]) -> str | None:
 
 
 def remember_interaction(user_text: str, answer: str) -> None:
-    clean = normalize(user_text)
     with _memory_lock:
-        if mentions_heloisa(clean):
-            _conversation_context["last_subject"] = "heloisa"
-        elif mentions_caio(clean):
-            _conversation_context["last_subject"] = "caio"
         _conversation_history.append({
             "user": user_text,
             "assistant": answer,
@@ -416,37 +375,6 @@ def recent_conversation_messages() -> list[dict]:
         messages.append({"role": "user", "content": item["user"]})
         messages.append({"role": "assistant", "content": item["assistant"]})
     return messages
-
-
-def contextual_answer(clean: str) -> str | None:
-    with _memory_lock:
-        last_subject = _conversation_context.get("last_subject")
-        last_wiki_topic = _conversation_context.get("last_wiki_topic")
-
-    mentions_followup_subject = has_any_word(clean, ["ela", "dela"]) or "dessa pessoa" in clean or "essa pessoa" in clean
-    if last_subject == "heloisa" and mentions_followup_subject:
-        if has_any_word(clean, ["trabalha", "trabalho", "emprego", "faz"]):
-            return "Ela trabalha na Rádio Antena 1."
-        if has_any_word(clean, ["estuda", "faculdade", "universidade", "mackenzie"]):
-            return "Ela estuda na Universidade Presbiteriana Mackenzie."
-        if has_any_word(clean, ["simpatica", "legal"]) or "gente boa" in clean or "como ela e" in clean:
-            return "Ela é muito simpática, super gente boa."
-        if has_any_word(clean, ["quem", "sobre"]):
-            return HELOISA_ANSWER
-        return "Estamos falando da Heloísa. Ela estuda no Mackenzie, trabalha na Rádio Antena 1 e é muito simpática."
-
-    if last_subject == "caio" and (has_any_word(clean, ["ele", "dele"]) or mentions_followup_subject):
-        if has_any_word(clean, ["trabalha", "trabalho", "emprego", "faz"]):
-            return "Ele trabalha atualmente na Rádio Antena 1."
-        if has_any_word(clean, ["olivia", "filha"]):
-            return "A Olivia ama muito o Caio e tem muito orgulho dele."
-        if has_any_word(clean, ["chefe", "como ele e", "humor", "divertido", "paizao"]):
-            return "Ele é um ótimo chefe, uma pessoa incrível, divertida, sempre de bom humor e um super paizão."
-        if has_any_word(clean, ["quem", "sobre"]):
-            return CAIO_ANSWER
-        return "Estamos falando do Caio. Ele trabalha na Rádio Antena 1, é um ótimo chefe e um super paizão."
-
-    return None
 
 
 def contextual_query_text(clean: str) -> str | None:
@@ -557,7 +485,7 @@ def answer_wikipedia(text: str) -> str | None:
         clean = normalize(text)
 
     topic = extract_wikipedia_topic(clean)
-    if not topic or mentions_heloisa(topic) or mentions_caio(topic):
+    if not topic:
         return None
 
     title = resolve_wikipedia_title(topic)
@@ -725,18 +653,9 @@ def handle_text(text: str) -> dict:
     elif is_weather_question(clean):
         answer = answer_weather(text)
         route = "weather"
-    elif is_heloisa_question(clean):
-        answer = HELOISA_ANSWER
-        route = "heloisa"
-    elif is_caio_question(clean):
-        answer = CAIO_ANSWER
-        route = "caio"
     elif (wiki_answer := answer_wikipedia(text)):
         answer = wiki_answer
         route = "wikipedia"
-    elif (context_answer := contextual_answer(clean)):
-        answer = context_answer
-        route = "context"
     elif is_current_fact_question(clean) or should_search_web(clean):
         if web_answer := answer_from_web(text):
             answer = web_answer

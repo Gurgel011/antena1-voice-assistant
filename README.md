@@ -1,3 +1,21 @@
+# Antena 1 — assistente de voz local (baseado em xiaozhi-esp32)
+
+Este repositório é a customização da Antena 1 do firmware open source
+[xiaozhi-esp32](https://github.com/78/xiaozhi-esp32): placa ESP-VoCat, tela e
+logotipo próprios, palavra de ativação original desativada, e um servidor de
+voz local em Python (Whisper + Ollama + Piper) no lugar do serviço em nuvem
+`xiaozhi.me` que o projeto original usa por padrão.
+
+**Comece por [`ANTENA1_SETUP.md`](ANTENA1_SETUP.md)** — compilação do firmware,
+os dois servidores locais (HTTP e WebSocket), configuração e diagnóstico.
+
+O restante deste documento é a documentação original do framework
+`xiaozhi-esp32`, preservada porque a maior parte do código deste repositório
+vem dele — protocolos, placas suportadas e guias de desenvolvimento genéricos
+valem igualmente aqui.
+
+---
+
 # An MCP-based Chatbot
 
 (English | [中文](README_zh.md) | [日本語](README_ja.md))

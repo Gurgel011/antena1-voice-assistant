@@ -15,7 +15,9 @@ CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions/v2/16m.csv"
 CONFIG_PARTITION_TABLE_OFFSET=0x8000
 
-CONFIG_OTA_URL="http://192.168.2.160:8088/ota/"
+# Valor de exemplo (faixa reservada para documentação, RFC 5737) — troque pelo
+# IP real do servidor antes de compilar para uso real. Ver ANTENA1_SETUP.md.
+CONFIG_OTA_URL="http://192.0.2.10:8088/ota/"
 
 CONFIG_ESP_TASK_WDT_TIMEOUT_S=10
 CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
