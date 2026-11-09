@@ -1,4 +1,8 @@
-# Antena 1 — assistente de voz local (baseado em xiaozhi-esp32)
+# Antena 1 · Assistente de voz local
+
+`ESP32` · `C++` · `Python` · `Whisper` · `Ollama` · `Piper`
+
+[Configuração e instalação](ANTENA1_SETUP.md) · [← Todos os projetos](https://github.com/Gurgel011#projetos)
 
 Este repositório é a customização da Antena 1 do firmware open source
 [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32): placa ESP-VoCat, tela e
